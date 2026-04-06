@@ -1066,7 +1066,7 @@
             syncResultsPanelMode(tab.dataset.tab);
         });
     });
-    syncResultsPanelMode(document.querySelector('.results-tab.active')?.dataset.tab || 'tab-gemini-ai');
+    syncResultsPanelMode(document.querySelector('.results-tab.active')?.dataset.tab || 'tab-stability');
 
     // ── Gemini AI Analysis ──
     const btnRunAI = $('btnRunAI');

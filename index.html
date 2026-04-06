@@ -697,8 +697,8 @@
                     <div class="results-tabs" style="display: flex; align-items: center;">
                         <button id="btnToggleResults" title="결과패널 창 접기/펴기"
                             style="background:transparent; border:none; color:var(--text-secondary); cursor:pointer; font-size:14px; padding:0 12px; height:100%; display:flex; align-items:center; transition:0.2s;">▼</button>
-                        <button class="results-tab" data-tab="tab-stability">📊 안정검토 결과</button>
-                        <button class="results-tab active" data-tab="tab-gemini-ai" id="btnTabGeminiAI">🤖 Gemini AI
+                        <button class="results-tab active" data-tab="tab-stability">📊 안정검토 결과</button>
+                        <button class="results-tab" data-tab="tab-gemini-ai" id="btnTabGeminiAI">🤖 Gemini AI
                             <span class="ng-badge" id="ngBadge" style="display: inline-block;">NG</span></button>
                     </div>
                     <div class="results-header-right">
@@ -707,7 +707,7 @@
                 </div>
 
                 <!-- Tab 1: 안정검토 결과 -->
-                <div class="results-tab-content" id="tab-stability">
+                <div class="results-tab-content active" id="tab-stability">
                     <div class="results-body">
                         <table class="summary-table case-table-h">
                             <thead id="resultsTableHead"></thead>
@@ -719,7 +719,7 @@
                 </div>
 
                 <!-- Tab 2: Gemini AI 통합 -->
-                <div class="results-tab-content active" id="tab-gemini-ai">
+                <div class="results-tab-content" id="tab-gemini-ai">
                     <div class="ai-analysis-body" style="display:flex; flex-direction:column; height:100%;">
                         <!-- 서브 모드 선택 버튼 -->
                         <div class="ai-sub-tabs">

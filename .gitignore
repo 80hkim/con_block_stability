@@ -1,0 +1,16 @@
+index_fixed_files/
+
+# 에이전트 산출물 (매 실행마다 재생성)
+output/*.md
+
+# OCR 중간 산출물
+_pdf_chunks/
+upstage_*.json
+*debug.json
+
+# API 키 포함 가능 스크립트
+convert_to_md.py
+
+# 대용량 원본
+*.xlsx
+*.pdf
