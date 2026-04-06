@@ -61,6 +61,7 @@
         rubbleFrictionAngle: 40,
         earthPressureMethod: 'rankine',  // 'rankine' = δ미적용, 'coulomb' = δ적용
         // Toe 설정 (피복석)
+        toeEnabled: true,
         armorLayerCount: 1,
         armorVolume: 0.2,
         armorHeight: 0.60,
@@ -269,12 +270,13 @@
             waveHeight: parseFloat(($('waveHeight') || {}).value) || 2.0,
             wavePeriod: parseFloat(($('wavePeriod') || {}).value) || 8.0,
             waveAngle: parseFloat(($('waveAngle') || {}).value) || 0,
-            // Toe 및 피복석
+            // Toe 및 피복석 (toeEnabled=false 시 width/armorHeight를 0으로 설정 → 시각화/계산 모두 자동 미적용)
             armorHeight: state.armorHeight * (state.armorLayerCount || 2),
             toe: {
-                width: state.toeWidth,
-                armorHeight: state.armorHeight * (state.armorLayerCount || 2),
-                slopeHeight: state.toeSlopeH
+                enabled: state.toeEnabled !== false,
+                width: state.toeEnabled !== false ? state.toeWidth : 0,
+                armorHeight: state.toeEnabled !== false ? (state.armorHeight * (state.armorLayerCount || 2)) : 0,
+                slopeHeight: state.toeEnabled !== false ? state.toeSlopeH : 0
             },
             // 외력분포도용 파라미터
             surchargeStructure: state.surchargeStructure,
@@ -370,7 +372,11 @@
         const p = {
             blocks: state.blocks,
             cap: { ...state.cap, height: state.crownEL - state.cap.bottomEL },
-            toe: { width: state.toeWidth, armorHeight: state.armorHeight * state.armorLayerCount },
+            toe: {
+                enabled: state.toeEnabled !== false,
+                width: state.toeEnabled !== false ? state.toeWidth : 0,
+                armorHeight: state.toeEnabled !== false ? (state.armorHeight * state.armorLayerCount) : 0
+            },
             seabedEL: state.seabedEL, rubbleHeight: state.rubbleHeight,
             concUnitWeight: state.concUnitWeight, seawaterUW: state.seawaterUnitWeight,
             ahhw: state.ahhw, allw: state.allw,
@@ -972,6 +978,27 @@
 
     // Toe 관련 이벤트 (피복석 규격만)
     $('armorVolume').addEventListener('change', () => { state.armorVolume = parseFloat($('armorVolume').value) || 0.1; updateArmorHeight(); updateVisualization(); });
+
+    // Toe 적용/미적용 토글
+    const toeEnabledCheckbox = $('toeEnabled');
+    if (toeEnabledCheckbox) {
+        const toeInputsWrap = $('toeInputsWrap');
+        const toeDisabledNote = $('toeDisabledNote');
+        const updateToeUI = () => {
+            const enabled = toeEnabledCheckbox.checked;
+            if (toeInputsWrap) {
+                toeInputsWrap.style.opacity = enabled ? '1' : '0.35';
+                toeInputsWrap.style.pointerEvents = enabled ? 'auto' : 'none';
+            }
+            if (toeDisabledNote) toeDisabledNote.style.display = enabled ? 'none' : 'block';
+        };
+        toeEnabledCheckbox.addEventListener('change', () => {
+            state.toeEnabled = toeEnabledCheckbox.checked;
+            updateToeUI();
+            updateVisualization();
+        });
+        updateToeUI();
+    }
 
     // 피복석 층수 이벤트
     const armorLayerSelect = $('armorLayerCount');

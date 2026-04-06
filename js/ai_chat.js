@@ -319,7 +319,8 @@
                 seabed: roundNum(s.seabedEL, 3),
                 cap: [roundNum(s.cap && s.cap.width, 3), roundNum(s.cap && s.cap.bottomEL, 3)],
                 blk: Array.isArray(s.blocks) ? s.blocks.map(b => [roundNum(b.width, 3), roundNum(b.bottomEL, 3)]) : [],
-                rub: [roundNum(s.rubbleHeight, 3), roundNum(s.rubbleWidth, 3), roundNum(s.concUnitWeight, 3)]
+                rub: [roundNum(s.rubbleHeight, 3), roundNum(s.rubbleWidth, 3), roundNum(s.concUnitWeight, 3)],
+                toe: { en: s.toeEnabled !== false ? 1 : 0, w: s.toeEnabled !== false ? roundNum(s.toeWidth, 2) : 0 }
             },
             cond: {
                 water: [roundNum(s.ahhw, 3), roundNum(s.allw, 3), roundNum(s.residualHead, 3)],
@@ -350,7 +351,8 @@
                 seabed: roundNum(s.seabedEL, 3),
                 cap: [roundNum(s.cap && s.cap.width, 3), roundNum(s.cap && s.cap.bottomEL, 3), roundNum((s.cap && s.cap.height) || 0, 3)],
                 blk: Array.isArray(s.blocks) ? s.blocks.map(b => [roundNum(b.width, 3), roundNum(b.bottomEL, 3), roundNum(b.height || 0, 3)]) : [],
-                rub: [roundNum(s.rubbleHeight, 3), roundNum(s.rubbleWidth, 3), roundNum(s.rubbleUnitWeight, 3), roundNum(s.rubbleSatUnitWeight, 3)]
+                rub: [roundNum(s.rubbleHeight, 3), roundNum(s.rubbleWidth, 3), roundNum(s.rubbleUnitWeight, 3), roundNum(s.rubbleSatUnitWeight, 3)],
+                toe: { en: s.toeEnabled !== false ? 1 : 0, w: s.toeEnabled !== false ? roundNum(s.toeWidth, 2) : 0, h: s.toeEnabled !== false ? roundNum(s.armorHeight * (s.armorLayerCount || 1), 2) : 0 }
             },
             cond: {
                 water: [roundNum(s.ahhw, 3), roundNum(s.allw, 3), roundNum(s.residualHead, 3)],
@@ -735,7 +737,11 @@
         const tempP = {
             blocks: tempBlocks,
             cap: { width: optObj.capWidth, height: st.crownEL - capBotEL, bottomEL: capBotEL },
-            toe: { width: st.toeWidth, armorHeight: st.armorHeight * st.armorLayerCount },
+            toe: {
+                enabled: st.toeEnabled !== false,
+                width: st.toeEnabled !== false ? st.toeWidth : 0,
+                armorHeight: st.toeEnabled !== false ? (st.armorHeight * st.armorLayerCount) : 0
+            },
             seabedEL: st.seabedEL, rubbleHeight: Math.max(0, tempBlocks[tempBlocks.length - 1].bottomEL - st.seabedEL),
             concUnitWeight: st.concUnitWeight, seawaterUW: st.seawaterUnitWeight,
             ahhw: st.ahhw, allw: st.allw,
