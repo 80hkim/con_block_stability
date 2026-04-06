@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<!-- saved from url=(0084)file:///F:/%E2%98%85%20Antigravity/00.%20AI/01.%20Conc.%20Block_2026.3.18/index.html -->
+<html lang="ko">
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>콘크리트 블록식 안벽 안정검토 시스템</title>
+    <meta name="description" content="항만 및 어항 설계기준에 따른 콘크리트 블록식 안벽의 활동, 전도, 지반지지력 안정성 검토 프로그램">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css?v=260323_1215">
+    <style>
+        .panel-scroll {
+            display: block !important;
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+        }
+
+        #input-panel {
+            position: relative !important;
+            height: 100% !important;
+            overflow: hidden !important;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Header -->
+    <header id="app-header">
+        <div class="header-left">
+            <div class="logo-icon">⚓</div>
+            <div class="header-titles">
+                <h1>콘크리트 블록식 안벽 안정검토</h1>
+                <p class="subtitle">Concrete Block Quay Wall Stability Analysis</p>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="ai-controls" style="margin-right: 15px; display: flex; align-items: center; gap: 8px;">
+                <input type="password" id="geminiApiKey" placeholder="🔑 Gemini API Key 입력..." class="api-key-input"
+                    style="height:32px; width: 220px; font-size:13px; border-radius:16px; padding:0 16px; border:1px solid rgba(255,255,255,0.2); background:rgba(0,0,0,0.2); color:#fff; transition: all 0.2s;">
+                <select id="geminiModelSelect"
+                    style="height:32px; font-size:12px; font-weight:600; border-radius:16px; padding:0 12px; border:1px solid rgba(255,255,255,0.2); background:rgba(0,0,0,0.3); color:#93c5fd; cursor:pointer; transition: all 0.2s; appearance:none; -webkit-appearance:none; background-image:url('data:image/svg+xml;utf8,<svg fill=&quot;%2393c5fd&quot; viewBox=&quot;0 0 24 24&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot;><path d=&quot;M7 10l5 5 5-5z&quot;/></svg>'); background-repeat:no-repeat; background-position:right 8px center; background-size:16px; padding-right:28px;">
+                    <option value="auto" selected="">Auto (권장)</option>
+                    <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+                    <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+                    <option value="gemini-3.1-pro">Gemini 3.1 Pro</option>
+                </select>
+                <label for="dxfFileInput" class="dxf-upload-btn"
+                    style="height:32px; padding:0 14px; font-size:12px; font-weight:600; border-radius:16px; border:1px solid rgba(59,130,246,0.5); background:rgba(59,130,246,0.15); color:#93c5fd; cursor:pointer; display:flex; align-items:center; gap:5px; white-space:nowrap; transition: all 0.2s;"
+                    title="DXF 단면도를 업로드하여 치수를 자동 인식합니다">
+                    📂 DXF
+                </label>
+                <input type="file" id="dxfFileInput" accept=".dxf" style="display:none;">
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Layout -->
+    <main id="app-main">
+        <!-- Left Input Panel -->
+        <aside id="input-panel">
+            <div class="panel-scroll"
+                style="max-height: calc(100vh - 56px); overflow-y: auto; overflow-x: hidden; padding: 12px;">
+
+                <!-- Section: 수위 조건 (조위 조건) -->
+                <div class="input-section active" id="section-water">
+                    <div class="section-header" data-toggle="section-water-body">
+                        <span class="section-icon">🌊</span>
+                        <span class="section-title">설계 조건</span>
+                        <span class="chevron">▾</span>
+                    </div>
+                    <div class="section-body" id="section-water-body">
+                        <div class="form-group">
+                            <label for="ahhw">약최고고조위 (Approx. HHW)</label>
+                            <div class="input-with-unit">
+                                <input type="number" id="ahhw" value="8.964" step="0.001">
+                                <span class="unit">DL m</span>
+                            </div>
+                        </div>
+                        <div class="form-group" style="display:none;">
+                            <label for="allw">약최저저조위 (Approx. LLW)</label>
+                            <div class="input-with-unit">
+                                <input type="number" id="allw" value="0.0" step="0.001">
+                                <span class="unit">DL m</span>
+                            </div>
+                        </div>
+                        <input type="hidden" id="mtl" value="4.48">
+
+                        <h4 class="sub-heading">지진 하중 (설계진도 자동/수동)</h4>
+
+                        <div class="radio-group" style="margin-bottom: 8px;">
+                            <label class="radio-label">
+                                <input type="radio" name="seismicInputMode" value="auto" checked="">
+                                <span class="radio-custom"></span> 자동 (KDS 기준)
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="seismicInputMode" value="manual">
+                                <span class="radio-custom"></span> 수동 입력
+                            </label>
+                        </div>
+
+                        <!-- 자동 모드 패널 -->
+                        <div id="seismicAutoPanel"
+                            style="background:rgba(255,255,255,0.03); padding:10px; border-radius:var(--radius-sm); border:1px solid var(--border-color); margin-bottom:12px;">
+                            <div class="form-row">
+                                <div class="form-group half">
+                                    <label>지진구역 (Z)</label>
+                                    <select id="seismicZone" style="width:100%; font-size:12px;">
+                                        <option value="0.11">I 구역 (0.11)</option>
+                                        <option value="0.07">II 구역 (0.07)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group half">
+                                    <label>재현주기/위험도도계수(I)</label>
+                                    <select id="seismicReturn" style="width:100%; font-size:12px;">
+                                        <option value="0.57">50년 (0.57)</option>
+                                        <option value="0.73">100년 (0.73)</option>
+                                        <option value="0.86">200년 (0.86)</option>
+                                        <option value="1.0" selected="">500년 (1.0)</option>
+                                        <option value="1.4">1000년 (1.4)</option>
+                                        <option value="2.0">2400년 (2.0)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group" style="margin-bottom:2px">
+                                <label>지반분류 (Site Class)</label>
+                                <select id="seismicSoilClass" style="width:100%; font-size:12px;">
+                                    <option value="S1">S1 (단단한 암반)</option>
+                                    <option value="S2" selected="">S2 (보통 암반)</option>
+                                    <option value="S3">S3 (매우 조밀한 토사)</option>
+                                    <option value="S4">S4 (조밀한 토사)</option>
+                                    <option value="S5">S5 (연약한 토사)</option>
+                                    <option value="S6">S6 (부지 특성 평가 필요)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group full">
+                                <label>설계수평진도 (k<sub>h</sub>) <span
+                                        style="font-size:9px; color:var(--accent);">*Effective</span></label>
+                                <input type="number" id="seismicKh" value="0.066" step="0.001">
+                            </div>
+                        </div>
+                        <div class="unit"
+                            style="font-size:9.5px; margin-top:4px; margin-bottom:4px; color:#f59e0b;">※ 간편식(Z·I·Fa) 적용 — 응답해석 기반(Amean) kh가 있으면 수동 입력 모드로 직접 입력 권장</div>
+                        <div class="unit" style="font-size:9.5px; color:var(--text-dim); margin-bottom:4px;">※
+                            연직지진계수(kv) 미적용 — KDS 64 17 00 §4.2.2: 중력식 안벽 등가정적해석 시 kv 고려하지 않음</div>
+                        <div class="unit" id="seismicAutoDetails"
+                            style="font-size:10px; color:var(--text-dim); margin-top:-4px; margin-bottom:16px;"></div>
+
+                        <h4 class="sub-heading">사용 재료 기본 물성치</h4>
+                        <div
+                            style="background:rgba(255,255,255,0.03); padding:10px; border-radius:var(--radius-sm); border:1px solid var(--border-color); margin-bottom:12px;">
+                            <!-- 토사 -->
+                            <div style="font-size:11px; color:var(--text-primary); margin-bottom:4px; font-weight:700;">
+                                배면 매립토 (모래)</div>
+                            <div class="form-row" style="margin-bottom:8px;">
+                                <div class="form-group half"><label>습윤 단위중량(γt)</label>
+                                    <div class="input-with-unit"><input type="number" id="soilUnitWeight" value="18.0"
+                                            step="0.1"><span class="unit">kN/m³</span></div>
+                                </div>
+                                <div class="form-group half"><label>포화 단위중량(γsat)</label>
+                                    <div class="input-with-unit"><input type="number" id="soilSatUnitWeight"
+                                            value="20.0" step="0.1"><span class="unit">kN/m³</span></div>
+                                </div>
+                            </div>
+                            <div class="form-row" style="margin-bottom:8px;">
+                                <div class="form-group half"><label>마찰각(Φ)</label>
+                                    <div class="input-with-unit"><input type="number" id="soilFrictionAngle" value="30"
+                                            step="1"><span class="unit">°</span></div>
+                                </div>
+                                <div class="form-group half">
+                                    <label>토압 이론</label>
+                                    <select id="earthPressureMethod"
+                                        style="width:100%; padding:6px 8px; background:var(--bg-input); color:var(--text-primary); border:1px solid var(--border-color); border-radius:var(--radius-sm); font-size:12px;">
+                                        <option value="coulomb">Coulomb (δ적용)</option>
+                                        <option value="rankine" selected="">Rankine (δ미적용)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-row" style="margin-bottom:8px; opacity:0.35; pointer-events:none;"
+                                id="wallFrictionRow">
+                                <div class="form-group half"><label>벽면마찰각(δ) <span
+                                            style="font-size:9px; color:var(--accent);">Coulomb</span></label>
+                                    <div class="input-with-unit"><input type="number" id="wallFrictionAngle" value="15"
+                                            step="1"><span class="unit">°</span></div>
+                                </div>
+                            </div>
+
+
+
+                            <!-- 사석 & 콘크리트 및 해수 -->
+                            <div style="font-size:11px; color:var(--text-primary); margin-bottom:4px; font-weight:700;">
+                                사석, 콘크리트 및 해수</div>
+                            <div class="form-row" style="margin-bottom:8px;">
+                                <div class="form-group half"><label>사석 단위중량(γr)</label>
+                                    <div class="input-with-unit"><input type="number" id="rubbleUnitWeight" value="18.0"
+                                            step="0.1"><span class="unit">kN/m³</span></div>
+                                </div>
+                                <div class="form-group half"><label>사석 포화중량(γrsat)</label>
+                                    <div class="input-with-unit"><input type="number" id="rubbleSatUnitWeight"
+                                            value="20.0" step="0.1"><span class="unit">kN/m³</span></div>
+                                </div>
+                            </div>
+                            <div class="form-row" style="margin-bottom:12px;">
+                                <div class="form-group"><label>사석 마찰각(Φr) <span
+                                            style="font-size:9px; color:var(--text-dim);">(참고용)</span></label>
+                                    <div class="input-with-unit"><input type="number" id="rubbleFrictionAngle"
+                                            value="40" step="1"><span class="unit">°</span></div>
+                                </div>
+                            </div>
+                            <div class="form-row" style="margin-bottom:12px;">
+                                <div class="form-group half"><label>무근 Con'c (γc)</label>
+                                    <div class="input-with-unit"><input type="number" id="concUnitWeight" value="23.0"
+                                            step="0.1"><span class="unit">kN/m³</span></div>
+                                </div>
+                                <div class="form-group half"><label>해수 단위중량(γw)</label>
+                                    <div class="input-with-unit"><input type="number" id="seawaterUnitWeight"
+                                            value="10.10" step="0.01"><span class="unit">kN/m³</span></div>
+                                </div>
+                            </div>
+
+                            <div style="font-size:11px; color:var(--text-primary); margin-bottom:4px; font-weight:700;">
+                                사석 마운드 상면 허용지지력 (q<sub>ta</sub>)</div>
+                            <div class="form-row" style="margin-bottom:4px;">
+                                <div class="form-group half"><label>상시 (q<sub>ta</sub>)</label>
+                                    <div class="input-with-unit"><input type="number" id="allowableBearingTop"
+                                            value="500" step="10" min="0"><span class="unit">kN/m²</span></div>
+                                </div>
+                                <div class="form-group half"><label>지진시 (q<sub>ta,seis</sub>)</label>
+                                    <div class="input-with-unit"><input type="number" id="allowableBearingTopSeismic"
+                                            value="600" step="10" min="0"><span class="unit">kN/m²</span></div>
+                                </div>
+                            </div>
+                            <div style="font-size:9.5px; color:var(--text-dim); margin-bottom:12px;">※ 1단계: p₁ ≤
+                                q<sub>ta</sub> (사석 마운드 상면 검토) — 통상 400~500 kN/m²</div>
+
+                            <div style="font-size:11px; color:var(--text-primary); margin-bottom:4px; font-weight:700;">
+                                기초지반 허용지지력 (q<sub>a</sub>)</div>
+                            <div class="form-row" style="margin-bottom:4px;">
+                                <div class="form-group half"><label>상시 (q<sub>a</sub>)</label>
+                                    <div class="input-with-unit"><input type="number" id="allowableBearing" value="500"
+                                            step="10" min="0"><span class="unit">kN/m²</span></div>
+                                </div>
+                                <div class="form-group half"><label>지진시 (q<sub>a,seis</sub>)</label>
+                                    <div class="input-with-unit"><input type="number" id="allowableBearingSeismic"
+                                            value="600" step="10" min="0"><span class="unit">kN/m²</span></div>
+                                </div>
+                            </div>
+                            <div style="font-size:9.5px; color:var(--text-dim); margin-bottom:12px;">※ 2단계: p₁' ≤
+                                q<sub>a</sub> (기초지반 상면 검토)</div>
+
+                            <!-- 마찰계수 (KDS 불변값이므로 UI에서 숨김) -->
+                            <div style="display:none;">
+                                <div
+                                    style="font-size:11px; color:var(--text-primary); margin-bottom:4px; font-weight:700;">
+                                    활동 마찰계수 (f)</div>
+                                <div class="form-row">
+                                    <div class="form-group half"><label>콘크리트-사석</label><input type="number"
+                                            id="frictionCR" value="0.6" step="0.05"></div>
+                                    <div class="form-group half"><label>콘-콘 (블록간)</label><input type="number"
+                                            id="frictionCC" value="0.5" step="0.05"></div>
+                                </div>
+                            </div>
+
+                            <!-- 상재하중 -->
+                            <div
+                                style="font-size:11px; color:var(--text-primary); margin-top:8px; margin-bottom:4px; font-weight:700;">
+                                상재하중 (q)</div>
+                            <div class="form-row">
+                                <div class="form-group half"><label for="surchargeStructure">구조물 (q<sub>1</sub>)</label>
+                                    <div class="input-with-unit"><input type="number" id="surchargeStructure"
+                                            value="10.0" step="1" min="0"><span class="unit">kN/m²</span></div>
+                                </div>
+                                <div class="form-group half"><label for="surchargeHinterland">배후부지
+                                        (q<sub>2</sub>)</label>
+                                    <div class="input-with-unit"><input type="number" id="surchargeHinterland"
+                                            value="10.0" step="1" min="0"><span class="unit">kN/m²</span></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section: 기본제원 설정 -->
+                <div class="input-section active" id="section-blocks">
+                    <div class="section-header" data-toggle="section-blocks-body">
+                        <span class="section-icon">🧱</span>
+                        <span class="section-title">기본제원 설정</span>
+                        <span class="chevron">▾</span>
+                    </div>
+                    <div class="section-body" id="section-blocks-body">
+
+                        <!-- 마루높이 -->
+                        <div class="form-group"
+                            style="padding:10px; background:rgba(255,165,0,0.05); border:1px solid rgba(255,165,0,0.2); border-radius:var(--radius-sm); margin-bottom:12px;">
+                            <label for="crownEL" style="font-weight:700; color:var(--text-primary);">마루높이 (안벽
+                                최상단)</label>
+                            <div class="input-with-unit">
+                                <input type="number" id="crownEL" value="9.5" step="0.1">
+                                <span class="unit">DL m</span>
+                            </div>
+                        </div>
+
+                        <!-- Block Count -->
+                        <div class="form-group">
+                            <label for="blockCount">블록 단수</label>
+                            <select id="blockCount">
+                                <option value="1">1단</option>
+                                <option value="2">2단</option>
+                                <option value="3" selected="">3단</option>
+                                <option value="4">4단</option>
+                                <option value="5">5단</option>
+                                <option value="6">6단</option>
+                                <option value="7">7단</option>
+                                <option value="8">8단</option>
+                                <option value="9">9단</option>
+                                <option value="10">10단</option>
+                            </select>
+                        </div>
+                        <div class="form-group half" style="display:none;">
+                            <label for="allw">약최저저조위 (Approx. LLW)</label>
+                            <div class="input-with-unit">
+                                <input type="number" id="allw" value="0.0" step="0.1" readonly="">
+                                <span class="unit">DL m</span>
+                            </div>
+                        </div>
+                        <!-- Cap Concrete -->
+                        <div class="block-input-group cap-group">
+                            <div class="block-label cap-label">
+                                <span class="block-badge cap">CAP</span>
+                                상치콘크리트
+                            </div>
+                            <div class="block-dims">
+                                <div class="dim-input">
+                                    <label>폭 B</label>
+                                    <div class="input-with-unit">
+                                        <input type="number" id="capWidth" value="1.5" step="0.1" min="0.5">
+                                        <span class="unit">m</span>
+                                    </div>
+                                </div>
+                                <div class="dim-input">
+                                    <label>하단 DL</label>
+                                    <div class="input-with-unit">
+                                        <input type="number" id="capBottomEL" value="8.4" step="0.1">
+                                        <span class="unit">DL m</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Dynamic Block Inputs -->
+                        <div id="blockInputs">
+                            <div class="block-input-group">
+                                <div class="block-label">
+                                    <span class="block-badge b1">1</span> 블록 1 (최상단)
+                                </div>
+                                <div class="block-dims">
+                                    <div class="dim-input"><label>폭 B</label>
+                                        <div class="input-with-unit">
+                                            <input type="number" class="block-width-input" data-index="0" value="1.8"
+                                                step="0.1" min="0.5" max="20"><span class="unit">m</span>
+                                        </div>
+                                    </div>
+                                    <div class="dim-input"><label>하단 DL</label>
+                                        <div class="input-with-unit">
+                                            <input type="number" class="block-bottom-input" data-index="0" value="6.6"
+                                                step="0.1"><span class="unit">DL m</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="block-input-group">
+                                <div class="block-label">
+                                    <span class="block-badge b2">2</span> 블록 2
+                                </div>
+                                <div class="block-dims">
+                                    <div class="dim-input"><label>폭 B</label>
+                                        <div class="input-with-unit">
+                                            <input type="number" class="block-width-input" data-index="1" value="2.1"
+                                                step="0.1" min="0.5" max="20"><span class="unit">m</span>
+                                        </div>
+                                    </div>
+                                    <div class="dim-input"><label>하단 DL</label>
+                                        <div class="input-with-unit">
+                                            <input type="number" class="block-bottom-input" data-index="1" value="4.8"
+                                                step="0.1"><span class="unit">DL m</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="block-input-group">
+                                <div class="block-label">
+                                    <span class="block-badge b3">3</span> 블록 3 (최하단)
+                                </div>
+                                <div class="block-dims">
+                                    <div class="dim-input"><label>폭 B</label>
+                                        <div class="input-with-unit">
+                                            <input type="number" class="block-width-input" data-index="2" value="2.9"
+                                                step="0.1" min="0.5" max="20"><span class="unit">m</span>
+                                        </div>
+                                    </div>
+                                    <div class="dim-input"><label>하단 DL</label>
+                                        <div class="input-with-unit">
+                                            <input type="number" class="block-bottom-input" data-index="2" value="3"
+                                                step="0.1"><span class="unit">DL m</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Toe 설정 (최하단 블록) -->
+                        <div class="block-input-group"
+                            style="margin-top:10px; border-top:1px solid var(--border-color); padding-top:10px;">
+                            <div class="block-label">
+                                <span class="block-badge" style="background:#5a8a6a;">TOE</span>
+                                최하단 블록 Toe
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group half">
+                                    <label for="armorVolume">피복석 규격 (≤1.0 m³/ea)</label>
+                                    <select id="armorVolume" style="width:100%;">
+                                        <option value="0.1">0.1 m³/ea</option>
+                                        <option value="0.2" selected="">0.2 m³/ea</option>
+                                        <option value="0.3">0.3 m³/ea</option>
+                                        <option value="0.4">0.4 m³/ea</option>
+                                        <option value="0.5">0.5 m³/ea</option>
+                                        <option value="0.6">0.6 m³/ea</option>
+                                        <option value="0.8">0.8 m³/ea</option>
+                                        <option value="1.0">1.0 m³/ea</option>
+                                    </select>
+                                </div>
+                                <div class="form-group half">
+                                    <label for="armorLayerCount">피복석 배치 단수 (n)</label>
+                                    <select id="armorLayerCount" style="width:100%;">
+                                        <option value="1" selected="">1단 피복 (물양장 표준)</option>
+                                        <option value="2">2단 피복</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-row" style="margin-bottom:12px;">
+
+                                <div style="font-size:10px; color:var(--text-dim); margin-top:4px;">
+                                    Toe 돌출 = 0.5m 고정, 높이 = 피복석고, 해측 기초사석 전면폭 산정에 활용
+                                </div>
+                            </div>
+                            <!-- 피복석 소요중량 검토 (이스바쉬 공식) -->
+                            <div class="block-input-group"
+                                style="margin-top:10px; border-top:1px solid var(--border-color); padding-top:10px; background:rgba(96,125,139,0.05);">
+                                <div class="block-label">
+                                    <span class="block-badge" style="background:#607d8b;">검토</span>
+                                    피복석 소요중량 (이스바쉬)
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group half">
+                                        <label for="currentVelocity">설계 조류속</label>
+                                        <div class="input-with-unit">
+                                            <input type="number" id="currentVelocity" value="0" step="0.1" min="0" max="10">
+                                            <span class="unit">m/s</span>
+                                        </div>
+                                    </div>
+                                    <div class="form-group half">
+                                        <label for="armorDensity">피복석 밀도</label>
+                                        <div class="input-with-unit">
+                                            <input type="number" id="armorDensity" value="2.65" step="0.05" min="2.0" max="3.5">
+                                            <span class="unit">t/m³</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group half">
+                                        <label for="isbashCoeff">이스바쉬 정수 (y)</label>
+                                        <select id="isbashCoeff" style="width:100%; font-size:12px;">
+                                            <option value="0.86" selected>전석 (y=0.86)</option>
+                                            <option value="1.08">이형블록 (y=1.08)</option>
+                                            <option value="1.20">파묻힌돌 (y=1.20)</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group half">
+                                        <div id="armorCheckResult" style="font-size:11px; color:var(--text-dim); padding:6px 8px; background:rgba(255,255,255,0.03); border-radius:4px; border:1px solid rgba(255,255,255,0.08); min-height:34px; display:flex; align-items:center;">
+                                            조류속 입력 시 자동 검토
+                                        </div>
+                                    </div>
+                                </div>
+                                <div style="font-size:10px; color:var(--text-dim); margin-top:2px; line-height:1.4;">
+                                    KDS 64 10 10 §4.3.10.3 — 흐름에 대한 사석 안정질량 (CERC Isbash식)
+                                </div>
+                            </div>
+
+
+                            <!-- 기초사석 & 해저면 -->
+                            <div class="block-input-group"
+                                style="margin-top:10px; border-top:1px solid var(--border-color); padding-top:10px; background:rgba(0,123,255,0.03);">
+                                <div class="block-label" style="display:flex; justify-content:space-between;">
+                                    <span><span class="block-badge" style="background:#5a7b8a;">사석</span> 기초사석</span>
+                                    <span style="font-size:11px; color:#ef4444;">※ 높이는 자동계산됨</span>
+                                </div>
+                                <div class="form-group">
+                                    <label for="rubbleWidth">해측 돌출폭</label>
+                                    <div class="input-with-unit">
+                                        <input type="number" id="rubbleWidth" value="1.7" step="0.1" min="1.0"
+                                            style="background: rgba(255, 165, 0, 0.1);">
+                                        <span class="unit">m</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 원지반 (해저면) -->
+                            <div class="form-group"
+                                style="padding:10px; background:rgba(139,69,19,0.05); border:1px solid rgba(139,69,19,0.2); border-radius:var(--radius-sm); margin-top:12px;">
+                                <label for="seabedEL" style="font-weight:700; color:var(--text-primary);">원지반 (안벽
+                                    최하단)</label>
+                                <div class="input-with-unit">
+                                    <input type="number" id="seabedEL" value="-1.3" step="0.1">
+                                    <span class="unit">DL m</span>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- Section: 지반 조건 삭제 완료됨 -->
+
+
+                    <!-- Section: 선박 견인력 -->
+                    <div class="input-section" id="section-loads">
+                        <div class="section-header" data-toggle="section-loads-body">
+                            <span class="section-icon">💨</span>
+                            <span class="section-title">선박 견인력</span>
+                            <span class="chevron">▾</span>
+                        </div>
+                        <div class="section-body collapsed" id="section-loads-body">
+
+
+                            <div style="display:none;">
+                                <h4 class="sub-heading">파랑 조건 (Goda식)</h4>
+                                <div class="form-row">
+                                    <div class="form-group half">
+                                        <label for="waveHeight">설계파고 (H<sub>1/3</sub>)</label>
+                                        <div class="input-with-unit">
+                                            <input type="number" id="waveHeight" value="2.0" step="0.1" min="0.1">
+                                            <span class="unit">m</span>
+                                        </div>
+                                    </div>
+                                    <div class="form-group half">
+                                        <label for="wavePeriod">파주기 (T)</label>
+                                        <div class="input-with-unit">
+                                            <input type="number" id="wavePeriod" value="8.0" step="0.5" min="1">
+                                            <span class="unit">s</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="waveAngle">파 입사각 (β)</label>
+                                    <div class="input-with-unit">
+                                        <input type="number" id="waveAngle" value="0" step="5" min="0" max="90">
+                                        <span class="unit">°</span>
+                                    </div>
+                                </div>
+                            </div>
+
+
+                            <h4 class="sub-heading" style="margin-top:16px">견인력 (Bollard - 선박계류력)</h4>
+                            <!-- 선박 구분 선택 -->
+                            <div class="form-row" style="margin-bottom:8px;">
+                                <div class="form-group full">
+                                    <label>선박 구분 (KDS 64 10 10)</label>
+                                    <div style="display:flex; gap:12px;">
+                                        <label class="radio-label">
+                                            <input type="radio" name="vesselType" value="ship" checked>
+                                            <span class="radio-custom"></span> 선박 (표 4.1-1, GT)
+                                        </label>
+                                        <label class="radio-label">
+                                            <input type="radio" name="vesselType" value="fishing">
+                                            <span class="radio-custom"></span> 어선 (표 4.1-2)
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group half">
+                                    <!-- 선박 드롭다운 -->
+                                    <div id="shipTonnageGroup">
+                                        <label for="vesselTonnage">대상 선박 (GT, KDS 표 4.1-1)</label>
+                                        <select id="vesselTonnage" style="width:100%; font-size:12px;">
+                                            <option value="0" selected="">적용 안 함 (0 kN)</option>
+                                            <option value="150">200 GT급 (150 kN)</option>
+                                            <option value="250">500 GT급 (250 kN)</option>
+                                            <option value="350">1,000 GT급 (350 kN)</option>
+                                            <option value="350b">2,000 GT급 (350 kN)</option>
+                                            <option value="500">3,000 GT급 (500 kN)</option>
+                                            <option value="700">5,000 GT급 (700 kN)</option>
+                                            <option value="1000">10,000 GT급 (1,000 kN)</option>
+                                            <option value="1500">20,000 GT급 (1,500 kN)</option>
+                                            <option value="2000">50,000 GT급 (2,000 kN)</option>
+                                            <option value="2000b">100,000 GT급 (2,000 kN)</option>
+                                            <option value="2500">150,000 GT급 (2,500 kN)</option>
+                                            <option value="2500b">200,000 GT급 (2,500 kN)</option>
+                                            <option value="manual">※ 수동 직접 입력</option>
+                                        </select>
+                                    </div>
+                                    <!-- 어선 드롭다운 -->
+                                    <div id="fishingTonnageGroup" style="display:none;">
+                                        <label for="fishingTonnage">대상 어선 (KDS 표 4.1-2)</label>
+                                        <select id="fishingTonnage" style="width:100%; font-size:12px;">
+                                            <option value="0" selected="">적용 안 함 (0 kN)</option>
+                                            <option value="10">10 ton 미만 (10 kN)</option>
+                                            <option value="30">10 ton 이상 ~ 150 ton 미만 (30 kN)</option>
+                                            <option value="50">50 ton 이상 ~ 1,100 ton 미만 (50 kN)</option>
+                                            <option value="70">100 ton 이상 ~ 1,200 ton 미만 (70 kN)</option>
+                                            <option value="150">200 ton 이상 ~ 1,500 ton 미만 (150 kN)</option>
+                                            <option value="250">500 ton 이상 ~ 11,000 ton 미만 (250 kN)</option>
+                                            <option value="manual">※ 수동 직접 입력</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-group half">
+                                    <label for="bollardForce">수평 견인력</label>
+                                    <div class="input-with-unit">
+                                        <input type="text" id="bollardForce" value="0" readonly=""
+                                            style="background:rgba(0,0,0,0.1); text-align: left; padding-left: 10px; height: 34px; width: 100%; border: 1px solid var(--border-color); border-radius: var(--radius-sm); color: var(--text-primary);">
+                                        <span class="unit">kN</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div
+                                style="font-size:10.5px; color:var(--text-dim); margin-top:4px; line-height:1.4; padding:8px; background:rgba(255,255,255,0.03); border-radius:4px; border:1px solid rgba(255,255,255,0.1);">
+                                <strong>[견인력 적용 판단 기준]</strong><br>
+                                ① <b>적용:</b> 견인력 > 0 입력 시 계류 상시 4조합이 추가됨 (8조합 → 12조합). 계류 여부는 q1/q2 조합과 독립된 축으로 분리<br>
+                                ② <b>근거:</b> KDS 64 55 20 §4.1 — 견인력은 외력 목록(§4.1.2 (5))에 포함. 계류 상태에서만 작용하는 하중 성격 (§4.2 참고)<br>
+                                ③ <b>지진시 제외:</b> §4.1 [참고](11) "지진력과 동시성이 없는 하중은 제외… ① 선박의 견인력"<br>
+                                ④ <b>물양장 등 소형부두:</b> 벽체 자중 대비 견인력의 영향력이 작아 전체 활동/전도 검토 시 생략(0kN)하는 것이 실무 관행임
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- 설계 표고 패널은 삭제 (입력부 상단 통합) -->
+
+                </div><!-- panel-scroll -->
+            </div>
+        </aside>
+
+        <!-- Visualization Panel -->
+        <section id="viz-panel">
+            <div class="viz-toolbar">
+                <div class="toolbar-left">
+                    <button id="btnZoomIn" class="tool-btn" title="확대">＋</button>
+                    <button id="btnZoomOut" class="tool-btn" title="축소">－</button>
+                    <button id="btnFit" class="tool-btn" title="맞춤">⊡</button>
+                </div>
+                <div class="toolbar-center">
+                    <span class="viz-title">단면도 (Cross Section)</span>
+                </div>
+                <div class="toolbar-right">
+                    <label class="toggle-label">
+                        <input type="checkbox" id="showDimensions" checked="">
+                        <span class="toggle-text">치수</span>
+                    </label>
+                    <label class="toggle-label" title="가시화를 위한 개념적 분포도이며, 실제 판정은 수치 계산 결과를 따릅니다.">
+                        <input type="checkbox" id="showForces">
+                        <span class="toggle-text">외력분포</span>
+                    </label>
+                    <label class="toggle-label">
+                        <input type="checkbox" id="showLabels" checked="">
+                        <span class="toggle-text">라벨</span>
+                    </label>
+                    <label class="toggle-label">
+                        <input type="checkbox" id="showWaterLevels" checked="">
+                        <span class="toggle-text">수위선</span>
+                    </label>
+                    <label class="toggle-label">
+                        <input type="checkbox" id="showCL">
+                        <span class="toggle-text">CL/구분선</span>
+                    </label>
+                </div>
+            </div>
+            <div id="canvas-container">
+                <canvas id="crossSectionCanvas" width="1540" height="383"></canvas>
+            </div>
+            <!-- Stability Results Panel -->
+            <div id="results-panel" class="">
+                <div class="results-header">
+                    <div class="results-tabs" style="display: flex; align-items: center;">
+                        <button id="btnToggleResults" title="결과패널 창 접기/펴기"
+                            style="background:transparent; border:none; color:var(--text-secondary); cursor:pointer; font-size:14px; padding:0 12px; height:100%; display:flex; align-items:center; transition:0.2s;">▼</button>
+                        <button class="results-tab" data-tab="tab-stability">📊 안정검토 결과</button>
+                        <button class="results-tab active" data-tab="tab-gemini-ai" id="btnTabGeminiAI">🤖 Gemini AI
+                            <span class="ng-badge" id="ngBadge" style="display: inline-block;">NG</span></button>
+                    </div>
+                    <div class="results-header-right">
+                        <span class="results-subtitle" id="resultsCaseSummary"></span>
+                    </div>
+                </div>
+
+                <!-- Tab 1: 안정검토 결과 -->
+                <div class="results-tab-content" id="tab-stability">
+                    <div class="results-body">
+                        <table class="summary-table case-table-h">
+                            <thead id="resultsTableHead"></thead>
+                            <tbody id="resultsTableBody">
+                                <!-- 동적 생성 (main.js buildResultsTable) -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Tab 2: Gemini AI 통합 -->
+                <div class="results-tab-content active" id="tab-gemini-ai">
+                    <div class="ai-analysis-body" style="display:flex; flex-direction:column; height:100%;">
+                        <!-- 서브 모드 선택 버튼 -->
+                        <div class="ai-sub-tabs">
+                            <button class="ai-sub-tab active" data-aisub="sub-optimize" id="btnSubOptimize">⚡ 단면 최적화</button>
+                            <button class="ai-sub-tab" data-aisub="sub-chat">💬 설계자문</button>
+                            <button class="ai-sub-tab" data-aisub="sub-ng" id="btnSubNG">🔍 NG 원인분석</button>
+                            <button class="ai-sub-tab" data-aisub="sub-opt-result" id="btnSubOptResult" disabled>📊 최적화 결과</button>
+                            <div style="flex:1;"></div>
+                            <div class="ai-model-badge" id="aiModelBadge">
+                                <span class="ai-model-icon">✨</span>
+                                <span id="aiModelBadgeText">Auto (권장)</span>
+                            </div>
+                        </div>
+
+                        <!-- Sub 1: 설계자문 채팅 -->
+                        <div class="ai-sub-content" id="sub-chat"
+                            style="flex: 1 1 0%; display: none; flex-direction: column; min-height: 0px;">
+                            <div class="ai-chat-container"
+                                style="flex:1; display:flex; flex-direction:column; min-height:0;">
+                                <div class="ai-chat-messages" id="aiChatMessages" style="flex:1; overflow-y:auto;">
+                                    <div class="chat-msg ai-msg">
+                                        <div class="msg-bubble">
+                                            안녕하세요! 항만 설계 AI Copilot입니다. ⚓<br>
+                                            좌측에 입력하신 <strong>설계 제원</strong>과 <strong>안정검토 결과</strong>를 실시간으로 모니터링하고
+                                            있습니다.<br>
+                                            안정성 확보 방안이나 설계 기준에 대해 무엇이든 질문해주세요.
+                                        </div>
+                                    </div>
+                                </div>
+                                <div id="aiChatModelStatus"
+                                    style="display:block; padding:8px 14px 0 14px; font-size:11px; color:var(--text-dim);">
+                                    선택 모델: Auto (권장)
+                                </div>
+                                <div class="ai-chat-input-area">
+                                    <textarea id="aiChatInput"
+                                        placeholder="예: 활동 안전율에서 NG가 났는데, 블록 폭을 늘려야 할까?"></textarea>
+                                    <button id="btnAIChatSend">
+                                        <span class="send-icon">➤</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Sub 2: NG 원인분석 -->
+                        <div class="ai-sub-content" id="sub-ng"
+                            style="flex:1; display:none; flex-direction:column; min-height:0; overflow-y:auto; padding:15px;">
+                            <div
+                                style="background:rgba(255,255,255,0.03); padding:15px; border-radius:6px; border:1px solid rgba(255,255,255,0.05);">
+                                <p
+                                    style="color:var(--text-secondary); margin-bottom:15px; font-size:13px; line-height:1.6;">
+                                    N.G. 발생 항목에 대해 <strong>역학적·기하학적 원인</strong>을 분석하고, 가장 효과적인 <strong>보완 대책</strong>을
+                                    제안합니다.
+                                </p>
+                                <div style="text-align:center; padding:8px 0;">
+                                    <button id="btnRunNGAna" class="btn-primary"
+                                        style="background:#ef4444; color:#fff; border:none; padding:10px 20px; border-radius:6px; font-size:13px; font-weight:600; cursor:pointer;">
+                                        🔍 NG 원인 및 대책 분석 실행
+                                    </button>
+                                </div>
+                                <div id="ngAnaResult"
+                                    style="margin-top:15px; background:rgba(15,23,42,0.8); padding:20px; border-radius:8px; display:none; border:1px solid rgba(255,255,255,0.1); line-height:1.6; font-size:14px; color:#cbd5e1; text-align:left;">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Sub 3: 단면 최적화 (인라인) -->
+                        <div class="ai-sub-content active" id="sub-optimize"
+                            style="flex: 1 1 0%; display: flex; flex-direction: column; min-height: 0px; overflow-y: auto; padding: 15px;">
+                            <!-- 최적화 설정 영역 (병렬 배치) -->
+                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+
+                                <!-- 1. 목표 안전율 설정 -->
+                                <div
+                                    style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:12px 16px; display:flex; flex-direction:column;">
+                                    <div style="display:flex; align-items:center; gap:6px; margin-bottom:10px;">
+                                        <span style="font-size:13px; font-weight:600; color:#60a5fa;">🎯 목표 안전율</span>
+                                    </div>
+                                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                                        <div
+                                            style="background:rgba(96,165,250,0.06); border:1px solid rgba(96,165,250,0.15); border-radius:6px; padding:8px; text-align:center;">
+                                            <label
+                                                style="font-size:11px; color:#94a3b8; display:block; margin-bottom:6px; font-weight:500;">상시
+                                                </label>
+                                            <div
+                                                style="display:flex; align-items:center; justify-content:center; gap:4px;">
+                                                <span style="font-size:11px; color:#e2e8f0; font-weight:500;">Fs
+                                                    ≥</span>
+                                                <input type="number" id="targetFsNormal" value="1.20" step="0.01"
+                                                    min="1.00"
+                                                    style="width:55px; text-align:center; background:rgba(15,23,42,0.8); border:1px solid rgba(96,165,250,0.4); border-radius:6px; color:#60a5fa; padding:4px; font-size:14px; font-weight:700;">
+                                            </div>
+                                        </div>
+                                        <div
+                                            style="background:rgba(251,146,60,0.06); border:1px solid rgba(251,146,60,0.15); border-radius:6px; padding:8px; text-align:center;">
+                                            <label
+                                                style="font-size:11px; color:#fb923c; display:block; margin-bottom:6px; font-weight:500;">지진시
+                                                </label>
+                                            <div
+                                                style="display:flex; align-items:center; justify-content:center; gap:4px;">
+                                                <span style="font-size:11px; color:#e2e8f0; font-weight:500;">Fs
+                                                    ≥</span>
+                                                <input type="number" id="targetFsSeismic" value="1.10" step="0.01"
+                                                    min="1.00"
+                                                    style="width:55px; text-align:center; background:rgba(15,23,42,0.8); border:1px solid rgba(251,146,60,0.4); border-radius:6px; color:#fb923c; padding:4px; font-size:14px; font-weight:700;">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <p
+                                        style="margin:8px 0 0 0; font-size:10px; color:#64748b; line-height:1.4; flex:1; display:flex; align-items:flex-end;">
+                                        모든 항목이 목표 안전율을 확보하도록 산정
+                                    </p>
+                                </div>
+
+                                <!-- 2. 제원 제한 설정 -->
+                                <div
+                                    style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:12px 16px; display:flex; flex-direction:column;">
+                                    <div style="display:flex; align-items:center; gap:6px; margin-bottom:10px;">
+                                        <span style="font-size:13px; font-weight:600; color:#c084fc;">🧱 블록 제원 제한
+                                            (조건)</span>
+                                    </div>
+                                    <div style="display:grid; grid-template-columns:1fr; gap:8px;">
+                                        <div
+                                            style="background:rgba(167,139,250,0.06); border:1px solid rgba(167,139,250,0.15); border-radius:6px; padding:8px; text-align:center;">
+                                            <label
+                                                style="font-size:11px; color:#d8b4fe; display:block; margin-bottom:6px; font-weight:500;">단일
+                                                블록의 최대 높이 제한</label>
+                                            <div
+                                                style="display:flex; align-items:center; justify-content:center; gap:4px;">
+                                                <span style="font-size:11px; color:#e2e8f0; font-weight:500;">H ≤</span>
+                                                <input type="number" id="maxBlockHeight" value="2.0" step="0.1"
+                                                    min="0.5"
+                                                    style="width:55px; text-align:center; background:rgba(15,23,42,0.8); border:1px solid rgba(167,139,250,0.4); border-radius:6px; color:#c084fc; padding:4px; font-size:14px; font-weight:700;">
+                                                <span style="font-size:11px; color:#e2e8f0;">m</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <p
+                                        style="margin:8px 0 0 0; font-size:10px; color:#64748b; line-height:1.4; flex:1; display:flex; align-items:flex-end;">
+                                        블록 높이가 제한 조건을 넘지 않도록 제어
+                                    </p>
+                                </div>
+
+                            </div>
+                            <div style="text-align:center; margin-bottom:12px;">
+                                <button id="btnRunOptimize" class="btn-optimize"
+                                    style="background: rgb(14, 116, 144); color: rgb(255, 255, 255); border: none; padding: 10px 24px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: rgba(0, 0, 0, 0.2) 0px 4px 12px; transition: 0.2s; opacity: 1;">
+                                    ⚡ 경제성 단면 최적화 실행
+                                </button>
+                                <p id="optStatusMsg" style="margin-top: 8px; font-size: 11px; color: var(--accent);">최적화
+                                    실행이 가능합니다.</p>
+                            </div>
+                            <!-- 인라인 결과 표시 영역 -->
+                            <div id="optResultArea" style="display: none;"></div>
+                        </div>
+
+                        <!-- Sub 4: 최적화 결과 (적용 후 상세 분석) -->
+                        <div class="ai-sub-content" id="sub-opt-result"
+                            style="flex:1; display:none; flex-direction:column; min-height:0; overflow-y:auto; padding:15px;">
+                            <div id="optDetailArea"
+                                style="color:#94a3b8; font-size:13px; text-align:left; padding:40px 0;">
+                                <span style="display:block; text-align:center;">최적화를 먼저 실행하고 적용해주세요.</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <style>
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .ng-badge {
+            background: #ef4444;
+            color: #fff;
+            font-size: 10px;
+            font-weight: bold;
+            padding: 2px 6px;
+            border-radius: 12px;
+            margin-left: 6px;
+            box-shadow: 0 0 5px rgba(239, 68, 68, 0.5);
+        }
+
+        #results-panel.collapsed .results-tab-content {
+            display: none !important;
+        }
+
+        #btnToggleResults:hover {
+            background: rgba(255, 255, 255, 0.05) !important;
+            color: #fff !important;
+        }
+    </style>
+
+    <script src="https://cdn.jsdelivr.net/npm/dxf-parser@1.1.2/dist/dxf-parser.min.js"></script>
+    <script src="js/visualization.js?v=260323_1215"></script>
+    <script src="js/stability.js?v=260323_1215"></script>
+    <script src="js/main.js?v=260323_1215"></script>
+    <div id="imageLikeTooltip"
+        style="display: none; position: fixed; z-index: 9999; background-color: transparent; pointer-events: none; white-space: nowrap;">
+    </div>
+    <div id="basicGlassTooltip"
+        style="display: none; position: fixed; z-index: 9999; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 8px; box-shadow: rgba(0, 0, 0, 0.5) 0px 10px 30px, rgba(255, 255, 255, 0.1) 0px 1px 0px inset; padding: 8px 12px; color: rgb(248, 250, 252); font-family: Inter, &quot;Malgun Gothic&quot;, sans-serif; font-size: 12px; pointer-events: none; white-space: nowrap; line-height: 1.5; left: 927px; top: 699px;">
+        <span style="color:#94a3b8; font-size:11px;">임계조건: </span>블록 1 하단<br><span
+            style="color:#94a3b8; font-size:11px;">수위조합: </span><span style="color:#38bdf8;">App. HHW</span></div>
+    <script src="js/ai_chat.js?v=260328_0430"></script>
+    <script src="js/dxf_upload.js?v=260323_1215"></script>
+
+
+
+</body>
+
+</html>
